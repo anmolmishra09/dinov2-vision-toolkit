@@ -1,10 +1,8 @@
 import torch
-import numpy as np
-from PIL import Image
 
 # Load a small DINOv2 model
 print("Loading DINOv2 ViT-S/14 model...")
-model = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
+model = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
 model.eval()
 
 # Create a dummy image (224x224 RGB)

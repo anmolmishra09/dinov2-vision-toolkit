@@ -4,19 +4,19 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import argparse
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 import torch
-import torch.backends.cudnn as cudnn
+from torch.backends import cudnn
 
+import dinov2.utils.utils as dinov2_utils
 from dinov2.models import build_model_from_cfg
 from dinov2.utils.config import setup
-import dinov2.utils.utils as dinov2_utils
 
 
 def get_args_parser(
-    description: Optional[str] = None,
-    parents: Optional[List[argparse.ArgumentParser]] = None,
+    description: str | None = None,
+    parents: list[argparse.ArgumentParser] | None = None,
     add_help: bool = True,
 ):
     parser = argparse.ArgumentParser(
@@ -50,7 +50,9 @@ def get_args_parser(
 
 
 def get_autocast_dtype(config):
-    teacher_dtype_str = config.compute_precision.teacher.backbone.mixed_precision.param_dtype
+    teacher_dtype_str = (
+        config.compute_precision.teacher.backbone.mixed_precision.param_dtype
+    )
     if teacher_dtype_str == "fp16":
         return torch.half
     elif teacher_dtype_str == "bf16":
@@ -67,7 +69,7 @@ def build_model_for_eval(config, pretrained_weights):
     return model
 
 
-def setup_and_build_model(args) -> Tuple[Any, torch.dtype]:
+def setup_and_build_model(args) -> tuple[Any, torch.dtype]:
     cudnn.benchmark = True
     config = setup(args)
     model = build_model_for_eval(config, args.pretrained_weights)

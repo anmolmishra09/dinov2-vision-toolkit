@@ -12,11 +12,10 @@ from .transforms import (
     make_normalize_transform,
 )
 
-
 logger = logging.getLogger("dinov2")
 
 
-class DataAugmentationDINO(object):
+class DataAugmentationDINO:
     def __init__(
         self,
         global_crops_scale,
@@ -44,7 +43,9 @@ class DataAugmentationDINO(object):
         self.geometric_augmentation_global = transforms.Compose(
             [
                 transforms.RandomResizedCrop(
-                    global_crops_size, scale=global_crops_scale, interpolation=transforms.InterpolationMode.BICUBIC
+                    global_crops_size,
+                    scale=global_crops_scale,
+                    interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
                 transforms.RandomHorizontalFlip(p=0.5),
             ]
@@ -53,7 +54,9 @@ class DataAugmentationDINO(object):
         self.geometric_augmentation_local = transforms.Compose(
             [
                 transforms.RandomResizedCrop(
-                    local_crops_size, scale=local_crops_scale, interpolation=transforms.InterpolationMode.BICUBIC
+                    local_crops_size,
+                    scale=local_crops_scale,
+                    interpolation=transforms.InterpolationMode.BICUBIC,
                 ),
                 transforms.RandomHorizontalFlip(p=0.5),
             ]
@@ -63,7 +66,11 @@ class DataAugmentationDINO(object):
         color_jittering = transforms.Compose(
             [
                 transforms.RandomApply(
-                    [transforms.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1)],
+                    [
+                        transforms.ColorJitter(
+                            brightness=0.4, contrast=0.4, saturation=0.2, hue=0.1
+                        )
+                    ],
                     p=0.8,
                 ),
                 transforms.RandomGrayscale(p=0.2),
@@ -89,9 +96,15 @@ class DataAugmentationDINO(object):
             ]
         )
 
-        self.global_transfo1 = transforms.Compose([color_jittering, global_transfo1_extra, self.normalize])
-        self.global_transfo2 = transforms.Compose([color_jittering, global_transfo2_extra, self.normalize])
-        self.local_transfo = transforms.Compose([color_jittering, local_transfo_extra, self.normalize])
+        self.global_transfo1 = transforms.Compose(
+            [color_jittering, global_transfo1_extra, self.normalize]
+        )
+        self.global_transfo2 = transforms.Compose(
+            [color_jittering, global_transfo2_extra, self.normalize]
+        )
+        self.local_transfo = transforms.Compose(
+            [color_jittering, local_transfo_extra, self.normalize]
+        )
 
     def __call__(self, image):
         output = {}
@@ -110,7 +123,8 @@ class DataAugmentationDINO(object):
 
         # local crops:
         local_crops = [
-            self.local_transfo(self.geometric_augmentation_local(image)) for _ in range(self.local_crops_number)
+            self.local_transfo(self.geometric_augmentation_local(image))
+            for _ in range(self.local_crops_number)
         ]
         output["local_crops"] = local_crops
         output["offsets"] = ()

@@ -1,13 +1,12 @@
 import math
 from dataclasses import dataclass
-from typing import Optional, Tuple
 
 import torch
 import torch.nn.functional as F
-from torch import nn, Tensor
+from torch import Tensor, nn
 
-from .vision_tower import VisionTower
 from .text_tower import TextTower
+from .vision_tower import VisionTower
 
 
 @dataclass
@@ -30,7 +29,7 @@ class DinoTxtConfig:
     text_model_tokens_pooler_type: str = "first"
     text_model_use_linear_projection: bool = False
     init_logit_scale: float = math.log(1 / 0.07)
-    init_logit_bias: Optional[float] = None
+    init_logit_bias: float | None = None
     freeze_logit_scale: bool = False
 
 
@@ -73,7 +72,7 @@ class DinoTxt(nn.Module):
         self.visual_model.init_weights()
         self.text_model.init_weights()
 
-    def get_visual_class_and_patch_tokens(self, image: Tensor) -> Tuple[Tensor, Tensor]:
+    def get_visual_class_and_patch_tokens(self, image: Tensor) -> tuple[Tensor, Tensor]:
         return self.visual_model.get_class_and_patch_tokens(image)
 
     def encode_image(
@@ -112,7 +111,7 @@ class DinoTxt(nn.Module):
         features = self.text_model(text)
         return F.normalize(features, dim=-1) if normalize else features
 
-    def get_logits(self, image: Tensor, text: Tensor) -> Tuple[Tensor, Tensor]:
+    def get_logits(self, image: Tensor, text: Tensor) -> tuple[Tensor, Tensor]:
         text_features = self.encode_text(text, normalize=True)
         image_features = self.encode_image(image, normalize=True)
         image_logits = self.logit_scale.exp() * image_features @ text_features.T
@@ -123,7 +122,7 @@ class DinoTxt(nn.Module):
         self,
         image: Tensor,
         text: Tensor,
-    ) -> Tuple[Tensor, Tensor, Tensor]:
+    ) -> tuple[Tensor, Tensor, Tensor]:
 
         text_features = self.encode_text(text, normalize=True)
         image_features = self.encode_image(image, normalize=True)

@@ -4,7 +4,7 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn as nn
+from torch import nn
 
 from ...models.builder import LOSSES
 
@@ -24,9 +24,15 @@ class SigLoss(nn.Module):
     """
 
     def __init__(
-        self, valid_mask=True, loss_weight=1.0, max_depth=None, warm_up=False, warm_iter=100, loss_name="sigloss"
+        self,
+        valid_mask=True,
+        loss_weight=1.0,
+        max_depth=None,
+        warm_up=False,
+        warm_iter=100,
+        loss_name="sigloss",
     ):
-        super(SigLoss, self).__init__()
+        super().__init__()
         self.valid_mask = valid_mask
         self.loss_weight = loss_weight
         self.max_depth = max_depth

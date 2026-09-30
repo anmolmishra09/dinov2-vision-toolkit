@@ -9,17 +9,18 @@ import os
 import sys
 from typing import Optional
 
-import dinov2.distributed as distributed
+from dinov2 import distributed
+
 from .helpers import MetricLogger, SmoothedValue
 
 
 # So that calling _configure_logger multiple times won't add many handlers
-@functools.lru_cache()
+@functools.lru_cache
 def _configure_logger(
-    name: Optional[str] = None,
+    name: str | None = None,
     *,
     level: int = logging.DEBUG,
-    output: Optional[str] = None,
+    output: str | None = None,
 ):
     """
     Configure a logger.
@@ -45,7 +46,9 @@ def _configure_logger(
     #   [IWEF]yyyymmdd hh:mm:ss.uuuuuu threadid file:line] msg
     # but use a shorter timestamp and include the logger name:
     #   [IWEF]yyyymmdd hh:mm:ss logger threadid file:line] msg
-    fmt_prefix = "%(levelname).1s%(asctime)s %(process)s %(name)s %(filename)s:%(lineno)s] "
+    fmt_prefix = (
+        "%(levelname).1s%(asctime)s %(process)s %(name)s %(filename)s:%(lineno)s] "
+    )
     fmt_message = "%(message)s"
     fmt = fmt_prefix + fmt_message
     datefmt = "%Y%m%d %H:%M:%S"
@@ -67,7 +70,7 @@ def _configure_logger(
 
         if not distributed.is_main_process():
             global_rank = distributed.get_global_rank()
-            filename = filename + ".rank{}".format(global_rank)
+            filename = filename + f".rank{global_rank}"
 
         os.makedirs(os.path.dirname(filename), exist_ok=True)
 
@@ -80,9 +83,9 @@ def _configure_logger(
 
 
 def setup_logging(
-    output: Optional[str] = None,
+    output: str | None = None,
     *,
-    name: Optional[str] = None,
+    name: str | None = None,
     level: int = logging.DEBUG,
     capture_warnings: bool = True,
 ) -> None:

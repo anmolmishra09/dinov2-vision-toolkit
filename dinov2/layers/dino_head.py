@@ -4,7 +4,7 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch.nn.init import trunc_normal_
 from torch.nn.utils import weight_norm
 
@@ -22,7 +22,14 @@ class DINOHead(nn.Module):
     ):
         super().__init__()
         nlayers = max(nlayers, 1)
-        self.mlp = _build_mlp(nlayers, in_dim, bottleneck_dim, hidden_dim=hidden_dim, use_bn=use_bn, bias=mlp_bias)
+        self.mlp = _build_mlp(
+            nlayers,
+            in_dim,
+            bottleneck_dim,
+            hidden_dim=hidden_dim,
+            use_bn=use_bn,
+            bias=mlp_bias,
+        )
         self.apply(self._init_weights)
         self.last_layer = weight_norm(nn.Linear(bottleneck_dim, out_dim, bias=False))
         self.last_layer.weight_g.data.fill_(1)
@@ -41,7 +48,9 @@ class DINOHead(nn.Module):
         return x
 
 
-def _build_mlp(nlayers, in_dim, bottleneck_dim, hidden_dim=None, use_bn=False, bias=True):
+def _build_mlp(
+    nlayers, in_dim, bottleneck_dim, hidden_dim=None, use_bn=False, bias=True
+):
     if nlayers == 1:
         return nn.Linear(in_dim, bottleneck_dim, bias=bias)
     else:

@@ -1,12 +1,13 @@
-import torch
 import math
+
+import torch
 
 from .backbones import dinov2_vitl14_reg
 from .utils import _DINOV2_BASE_URL
 
 
 def dinov2_vitl14_reg4_dinotxt_tet1280d20h24l():
-    from .text.dinotxt_model import DinoTxtConfig, DinoTxt
+    from .text.dinotxt_model import DinoTxt, DinoTxtConfig
     from .text.dinov2_wrapper import DINOv2Wrapper
     from .text.text_transformer import TextTransformer
 
@@ -50,11 +51,13 @@ def dinov2_vitl14_reg4_dinotxt_tet1280d20h24l():
     model.eval()
 
     visual_model_head_state_dict = torch.hub.load_state_dict_from_url(
-        _DINOV2_BASE_URL + "/dinov2_vitl14/dinov2_vitl14_reg4_dinotxt_tet1280d20h24l_vision_head.pth",
+        _DINOV2_BASE_URL
+        + "/dinov2_vitl14/dinov2_vitl14_reg4_dinotxt_tet1280d20h24l_vision_head.pth",
         map_location="cpu",
     )
     text_model_state_dict = torch.hub.load_state_dict_from_url(
-        _DINOV2_BASE_URL + "/dinov2_vitl14/dinov2_vitl14_reg4_dinotxt_tet1280d20h24l_text_encoder.pth",
+        _DINOV2_BASE_URL
+        + "/dinov2_vitl14/dinov2_vitl14_reg4_dinotxt_tet1280d20h24l_text_encoder.pth",
         map_location="cpu",
     )
     model.visual_model.head.load_state_dict(visual_model_head_state_dict, strict=True)
@@ -63,9 +66,11 @@ def dinov2_vitl14_reg4_dinotxt_tet1280d20h24l():
 
 
 def get_tokenizer():
-    from .text.tokenizer import Tokenizer
-    import requests
     from io import BytesIO
+
+    import requests
+
+    from .text.tokenizer import Tokenizer
 
     url = _DINOV2_BASE_URL + "/thirdparty/bpe_simple_vocab_16e6.txt.gz"
     try:
@@ -74,4 +79,6 @@ def get_tokenizer():
         file_buf = BytesIO(response.content)
         return Tokenizer(vocab_path=file_buf)
     except Exception as e:
-        raise FileNotFoundError(f"Failed to download file from url {url} with error last: {e}")
+        raise FileNotFoundError(
+            f"Failed to download file from url {url} with error last: {e}"
+        )

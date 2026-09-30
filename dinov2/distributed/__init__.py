@@ -117,15 +117,19 @@ _TORCH_DISTRIBUTED_ENV_VARS = (
 )
 
 
-def _collect_env_vars() -> Dict[str, str]:
-    return {env_var: os.environ[env_var] for env_var in _TORCH_DISTRIBUTED_ENV_VARS if env_var in os.environ}
+def _collect_env_vars() -> dict[str, str]:
+    return {
+        env_var: os.environ[env_var]
+        for env_var in _TORCH_DISTRIBUTED_ENV_VARS
+        if env_var in os.environ
+    }
 
 
 def _is_slurm_job_process() -> bool:
     return "SLURM_JOB_ID" in os.environ
 
 
-def _parse_slurm_node_list(s: str) -> List[str]:
+def _parse_slurm_node_list(s: str) -> list[str]:
     nodes = []
     # Extract "hostname", "hostname[1-2,3,4-5]," substrings
     p = re.compile(r"(([^\[]+)(?:\[([^\]]+)\])?),?")
@@ -145,7 +149,9 @@ def _parse_slurm_node_list(s: str) -> List[str]:
 def _check_env_variable(key: str, new_value: str):
     # Only check for difference with preset environment variables
     if key in os.environ and os.environ[key] != new_value:
-        raise RuntimeError(f"Cannot export environment variables as {key} is already set")
+        raise RuntimeError(
+            f"Cannot export environment variables as {key} is already set"
+        )
 
 
 class _TorchDistributedEnvironment:
@@ -236,7 +242,12 @@ class _TorchDistributedEnvironment:
         return self
 
 
-def enable(*, set_cuda_current_device: bool = True, overwrite: bool = False, allow_nccl_timeout: bool = False):
+def enable(
+    *,
+    set_cuda_current_device: bool = True,
+    overwrite: bool = False,
+    allow_nccl_timeout: bool = False,
+):
     """Enable distributed mode
 
     Args:

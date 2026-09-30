@@ -750,16 +750,16 @@ A corresponding [model card](MODEL_CARD.md) is included in the repository.
 import torch
 
 # DINOv2
-dinov2_vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
-dinov2_vitb14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
-dinov2_vitl14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14')
-dinov2_vitg14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14')
+dinov2_vits14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14")
+dinov2_vitb14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14")
+dinov2_vitl14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14")
+dinov2_vitg14 = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14")
 
 # DINOv2 with registers
-dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
-dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
-dinov2_vitl14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14_reg')
-dinov2_vitg14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14_reg')
+dinov2_vits14_reg = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14_reg")
+dinov2_vitb14_reg = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14_reg")
+dinov2_vitl14_reg = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14_reg")
+dinov2_vitg14_reg = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg")
 ```
 
 ### Pretrained heads - Image classification
@@ -843,16 +843,16 @@ The (full) classifier models can be loaded via PyTorch Hub:
 import torch
 
 # DINOv2
-dinov2_vits14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_lc')
-dinov2_vitb14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_lc')
-dinov2_vitl14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14_lc')
-dinov2_vitg14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14_lc')
+dinov2_vits14_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14_lc")
+dinov2_vitb14_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14_lc")
+dinov2_vitl14_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14_lc")
+dinov2_vitg14_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_lc")
 
 # DINOv2 with registers
-dinov2_vits14_reg_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg_lc')
-dinov2_vitb14_reg_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg_lc')
-dinov2_vitl14_reg_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14_reg_lc')
-dinov2_vitg14_reg_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14_reg_lc')
+dinov2_vits14_reg_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vits14_reg_lc")
+dinov2_vitb14_reg_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitb14_reg_lc")
+dinov2_vitl14_reg_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitl14_reg_lc")
+dinov2_vitg14_reg_lc = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg_lc")
 ```
 
 ### Pretrained heads - Depth estimation
@@ -1024,7 +1024,9 @@ The (full) dino.txt model can be loaded via PyTorch Hub:
 import torch
 
 # DINOv2
-dinov2_vitl14_reg4_dinotxt_tet1280d20h24l = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitl14_reg4_dinotxt_tet1280d20h24l')
+dinov2_vitl14_reg4_dinotxt_tet1280d20h24l = torch.hub.load(
+    "facebookresearch/dinov2", "dinov2_vitl14_reg4_dinotxt_tet1280d20h24l"
+)
 ```
 
 

@@ -4,16 +4,14 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import logging
-from typing import Dict, Optional
 
 import torch
 from torch import nn
 from torchmetrics import MetricCollection
 
+from dinov2 import distributed
 from dinov2.data import DatasetWithEnumeratedTargets, SamplerType, make_data_loader
-import dinov2.distributed as distributed
 from dinov2.logging import MetricLogger
-
 
 logger = logging.getLogger("dinov2")
 
@@ -36,11 +34,10 @@ class ModelWithIntermediateLayers(nn.Module):
         self.autocast_ctx = autocast_ctx
 
     def forward(self, images):
-        with torch.inference_mode():
-            with self.autocast_ctx():
-                features = self.feature_model.get_intermediate_layers(
-                    images, self.n_last_blocks, return_class_token=True
-                )
+        with torch.inference_mode(), self.autocast_ctx():
+            features = self.feature_model.get_intermediate_layers(
+                images, self.n_last_blocks, return_class_token=True
+            )
         return features
 
 
@@ -48,10 +45,10 @@ class ModelWithIntermediateLayers(nn.Module):
 def evaluate(
     model: nn.Module,
     data_loader,
-    postprocessors: Dict[str, nn.Module],
-    metrics: Dict[str, MetricCollection],
+    postprocessors: dict[str, nn.Module],
+    metrics: dict[str, MetricCollection],
     device: torch.device,
-    criterion: Optional[nn.Module] = None,
+    criterion: nn.Module | None = None,
 ):
     model.eval()
     if criterion is not None:
@@ -79,7 +76,9 @@ def evaluate(
     logger.info(f"Averaged stats: {metric_logger}")
 
     stats = {k: metric.compute() for k, metric in metrics.items()}
-    metric_logger_stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+    metric_logger_stats = {
+        k: meter.global_avg for k, meter in metric_logger.meters.items()
+    }
     return metric_logger_stats, stats
 
 
@@ -106,11 +105,15 @@ def extract_features(model, dataset, batch_size, num_workers, gather_on_cpu=Fals
         drop_last=False,
         shuffle=False,
     )
-    return extract_features_with_dataloader(model, data_loader, sample_count, gather_on_cpu)
+    return extract_features_with_dataloader(
+        model, data_loader, sample_count, gather_on_cpu
+    )
 
 
 @torch.inference_mode()
-def extract_features_with_dataloader(model, data_loader, sample_count, gather_on_cpu=False):
+def extract_features_with_dataloader(
+    model, data_loader, sample_count, gather_on_cpu=False
+):
     gather_device = torch.device("cpu") if gather_on_cpu else torch.device("cuda")
     metric_logger = MetricLogger(delimiter="  ")
     features, all_labels = None, None
@@ -122,7 +125,9 @@ def extract_features_with_dataloader(model, data_loader, sample_count, gather_on
 
         # init storage feature matrix
         if features is None:
-            features = torch.zeros(sample_count, features_rank.shape[-1], device=gather_device)
+            features = torch.zeros(
+                sample_count, features_rank.shape[-1], device=gather_device
+            )
             labels_shape = list(labels_rank.shape)
             labels_shape[0] = sample_count
             all_labels = torch.full(labels_shape, fill_value=-1, device=gather_device)

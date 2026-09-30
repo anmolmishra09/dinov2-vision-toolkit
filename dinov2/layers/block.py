@@ -9,17 +9,17 @@
 
 import logging
 import os
-from typing import Callable, List, Any, Tuple, Dict, Optional
 import warnings
+from collections.abc import Callable
+from typing import Any
 
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from .attention import Attention, MemEffAttention
 from .drop_path import DropPath
 from .layer_scale import LayerScale
 from .mlp import Mlp
-
 
 logger = logging.getLogger("dinov2")
 
@@ -27,7 +27,7 @@ logger = logging.getLogger("dinov2")
 XFORMERS_ENABLED = os.environ.get("XFORMERS_DISABLED") is None
 try:
     if XFORMERS_ENABLED:
-        from xformers.ops import fmha, scaled_index_add, index_select_cat
+        from xformers.ops import fmha, index_select_cat, scaled_index_add
 
         XFORMERS_AVAILABLE = True
         warnings.warn("xFormers is available (Block)")
@@ -69,7 +69,9 @@ class Block(nn.Module):
             attn_drop=attn_drop,
             proj_drop=drop,
         )
-        self.ls1 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        self.ls1 = (
+            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        )
         self.drop_path1 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.norm2 = norm_layer(dim)
@@ -81,7 +83,9 @@ class Block(nn.Module):
             drop=drop,
             bias=ffn_bias,
         )
-        self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        self.ls2 = (
+            LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        )
         self.drop_path2 = DropPath(drop_path) if drop_path > 0.0 else nn.Identity()
 
         self.sample_drop_ratio = drop_path
@@ -120,7 +124,7 @@ class CausalAttentionBlock(nn.Module):
         dim: int,
         num_heads: int,
         ffn_ratio: float = 4.0,
-        ls_init_value: Optional[float] = None,
+        ls_init_value: float | None = None,
         is_causal: bool = True,
         act_layer: Callable = nn.GELU,
         norm_layer: Callable = nn.LayerNorm,
@@ -130,9 +134,15 @@ class CausalAttentionBlock(nn.Module):
 
         self.dim = dim
         self.is_causal = is_causal
-        self.ls1 = LayerScale(dim, init_values=ls_init_value) if ls_init_value else nn.Identity()
+        self.ls1 = (
+            LayerScale(dim, init_values=ls_init_value)
+            if ls_init_value
+            else nn.Identity()
+        )
         self.attention_norm = norm_layer(dim)
-        self.attention = Attention(dim, num_heads, attn_drop=dropout_prob, proj_drop=dropout_prob)
+        self.attention = Attention(
+            dim, num_heads, attn_drop=dropout_prob, proj_drop=dropout_prob
+        )
 
         self.ffn_norm = norm_layer(dim)
         ffn_hidden_dim = int(dim * ffn_ratio)
@@ -143,7 +153,11 @@ class CausalAttentionBlock(nn.Module):
             act_layer=act_layer,
         )
 
-        self.ls2 = LayerScale(dim, init_values=ls_init_value) if ls_init_value else nn.Identity()
+        self.ls2 = (
+            LayerScale(dim, init_values=ls_init_value)
+            if ls_init_value
+            else nn.Identity()
+        )
 
     def init_weights(
         self,
@@ -190,7 +204,9 @@ def drop_add_residual_stochastic_depth(
     residual_scale_factor = b / sample_subset_size
 
     # 3) add the residual
-    x_plus_residual = torch.index_add(x_flat, 0, brange, residual.to(dtype=x.dtype), alpha=residual_scale_factor)
+    x_plus_residual = torch.index_add(
+        x_flat, 0, brange, residual.to(dtype=x.dtype), alpha=residual_scale_factor
+    )
     return x_plus_residual.view_as(x)
 
 
@@ -206,24 +222,34 @@ def add_residual(x, brange, residual, residual_scale_factor, scaling_vector=None
     if scaling_vector is None:
         x_flat = x.flatten(1)
         residual = residual.flatten(1)
-        x_plus_residual = torch.index_add(x_flat, 0, brange, residual.to(dtype=x.dtype), alpha=residual_scale_factor)
+        x_plus_residual = torch.index_add(
+            x_flat, 0, brange, residual.to(dtype=x.dtype), alpha=residual_scale_factor
+        )
     else:
         x_plus_residual = scaled_index_add(
-            x, brange, residual.to(dtype=x.dtype), scaling=scaling_vector, alpha=residual_scale_factor
+            x,
+            brange,
+            residual.to(dtype=x.dtype),
+            scaling=scaling_vector,
+            alpha=residual_scale_factor,
         )
     return x_plus_residual
 
 
-attn_bias_cache: Dict[Tuple, Any] = {}
+attn_bias_cache: dict[tuple, Any] = {}
 
 
 def get_attn_bias_and_cat(x_list, branges=None):
     """
     this will perform the index select, cat the tensors, and provide the attn_bias from cache
     """
-    batch_sizes = [b.shape[0] for b in branges] if branges is not None else [x.shape[0] for x in x_list]
+    batch_sizes = (
+        [b.shape[0] for b in branges]
+        if branges is not None
+        else [x.shape[0] for x in x_list]
+    )
     all_shapes = tuple((b, x.shape[1]) for b, x in zip(batch_sizes, x_list))
-    if all_shapes not in attn_bias_cache.keys():
+    if all_shapes not in attn_bias_cache:
         seqlens = []
         for b, x in zip(batch_sizes, x_list):
             for _ in range(b):
@@ -233,7 +259,9 @@ def get_attn_bias_and_cat(x_list, branges=None):
         attn_bias_cache[all_shapes] = attn_bias
 
     if branges is not None:
-        cat_tensors = index_select_cat([x.flatten(1) for x in x_list], branges).view(1, -1, x_list[0].shape[-1])
+        cat_tensors = index_select_cat([x.flatten(1) for x in x_list], branges).view(
+            1, -1, x_list[0].shape[-1]
+        )
     else:
         tensors_bs1 = tuple(x.reshape([1, -1, *x.shape[2:]]) for x in x_list)
         cat_tensors = torch.cat(tensors_bs1, dim=1)
@@ -242,13 +270,15 @@ def get_attn_bias_and_cat(x_list, branges=None):
 
 
 def drop_add_residual_stochastic_depth_list(
-    x_list: List[Tensor],
+    x_list: list[Tensor],
     residual_func: Callable[[Tensor, Any], Tensor],
     sample_drop_ratio: float = 0.0,
     scaling_vector=None,
 ) -> Tensor:
     # 1) generate random set of indices for dropping samples in the batch
-    branges_scales = [get_branges_scales(x, sample_drop_ratio=sample_drop_ratio) for x in x_list]
+    branges_scales = [
+        get_branges_scales(x, sample_drop_ratio=sample_drop_ratio) for x in x_list
+    ]
     branges = [s[0] for s in branges_scales]
     residual_scale_factors = [s[1] for s in branges_scales]
 
@@ -259,13 +289,19 @@ def drop_add_residual_stochastic_depth_list(
     residual_list = attn_bias.split(residual_func(x_cat, attn_bias=attn_bias))  # type: ignore
 
     outputs = []
-    for x, brange, residual, residual_scale_factor in zip(x_list, branges, residual_list, residual_scale_factors):
-        outputs.append(add_residual(x, brange, residual, residual_scale_factor, scaling_vector).view_as(x))
+    for x, brange, residual, residual_scale_factor in zip(
+        x_list, branges, residual_list, residual_scale_factors
+    ):
+        outputs.append(
+            add_residual(
+                x, brange, residual, residual_scale_factor, scaling_vector
+            ).view_as(x)
+        )
     return outputs
 
 
 class NestedTensorBlock(Block):
-    def forward_nested(self, x_list: List[Tensor]) -> List[Tensor]:
+    def forward_nested(self, x_list: list[Tensor]) -> list[Tensor]:
         """
         x_list contains a list of tensors to nest together and run
         """
@@ -283,13 +319,17 @@ class NestedTensorBlock(Block):
                 x_list,
                 residual_func=attn_residual_func,
                 sample_drop_ratio=self.sample_drop_ratio,
-                scaling_vector=self.ls1.gamma if isinstance(self.ls1, LayerScale) else None,
+                scaling_vector=self.ls1.gamma
+                if isinstance(self.ls1, LayerScale)
+                else None,
             )
             x_list = drop_add_residual_stochastic_depth_list(
                 x_list,
                 residual_func=ffn_residual_func,
                 sample_drop_ratio=self.sample_drop_ratio,
-                scaling_vector=self.ls2.gamma if isinstance(self.ls1, LayerScale) else None,
+                scaling_vector=self.ls2.gamma
+                if isinstance(self.ls1, LayerScale)
+                else None,
             )
             return x_list
         else:

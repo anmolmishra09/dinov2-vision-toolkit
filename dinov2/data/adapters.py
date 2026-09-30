@@ -3,7 +3,7 @@
 # This source code is licensed under the Apache License, Version 2.0
 # found in the LICENSE file in the root directory of this source tree.
 
-from typing import Any, Tuple
+from typing import Any
 
 from torch.utils.data import Dataset
 
@@ -15,11 +15,11 @@ class DatasetWithEnumeratedTargets(Dataset):
     def get_image_data(self, index: int) -> bytes:
         return self._dataset.get_image_data(index)
 
-    def get_target(self, index: int) -> Tuple[Any, int]:
+    def get_target(self, index: int) -> tuple[Any, int]:
         target = self._dataset.get_target(index)
         return (index, target)
 
-    def __getitem__(self, index: int) -> Tuple[Any, Tuple[Any, int]]:
+    def __getitem__(self, index: int) -> tuple[Any, tuple[Any, int]]:
         image, target = self._dataset[index]
         target = index if target is None else target
         return image, (index, target)

@@ -1,8 +1,7 @@
-from typing import Callable, Optional, Tuple
+from collections.abc import Callable
 
 import torch
-from torch import nn, Tensor
-
+from torch import Tensor, nn
 
 from dinov2.layers import CausalAttentionBlock
 
@@ -17,7 +16,7 @@ class TextTransformer(nn.Module):
         num_layers: int,
         ffn_ratio: float,
         is_causal: bool,
-        ls_init_value: Optional[float] = None,
+        ls_init_value: float | None = None,
         act_layer: Callable = nn.GELU,
         norm_layer: Callable = nn.LayerNorm,
         dropout_prob: float = 0.0,
@@ -57,7 +56,7 @@ class TextTransformer(nn.Module):
             block.init_weights(init_attn_std, init_proj_std, init_fc_std)
         self.ln_final.reset_parameters()
 
-    def forward(self, token_indices: Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+    def forward(self, token_indices: Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         _, N = token_indices.size()
         x = self.token_embedding(token_indices) + self.positional_embedding[:N]
         x = self.dropout(x)

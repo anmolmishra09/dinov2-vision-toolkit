@@ -4,14 +4,14 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import itertools
-from typing import Any, Optional
 import warnings
+from typing import Any
 
 import numpy as np
 import torch
 from torch.utils.data.sampler import Sampler
 
-import dinov2.distributed as distributed
+from dinov2 import distributed
 
 
 class EpochSampler(Sampler):
@@ -22,8 +22,8 @@ class EpochSampler(Sampler):
         sample_count: int,
         shuffle: bool = False,
         seed: int = 0,
-        start: Optional[int] = None,
-        step: Optional[int] = None,
+        start: int | None = None,
+        step: int | None = None,
     ):
         self._size = size
         self._sample_count = sample_count
@@ -82,8 +82,8 @@ class InfiniteSampler(Sampler):
         sample_count: int,
         shuffle: bool = False,
         seed: int = 0,
-        start: Optional[int] = None,
-        step: Optional[int] = None,
+        start: int | None = None,
+        step: int | None = None,
         advance: int = 0,
     ):
         self._sample_count = sample_count
@@ -116,7 +116,9 @@ class InfiniteSampler(Sampler):
         generator = torch.Generator().manual_seed(self._seed)
 
         while True:
-            iterable = _generate_randperm_indices(size=self._sample_count, generator=generator)
+            iterable = _generate_randperm_indices(
+                size=self._sample_count, generator=generator
+            )
             yield from itertools.islice(iterable, self._start, None, self._step)
 
 
@@ -135,7 +137,11 @@ def _shuffle_tensor_slice(
     result = np.empty(count, dtype=dtype)
 
     for i in range(count):
-        j = torch.randint(0, i + 1, size=(1,), generator=generator).item() if i > 0 else 0
+        j = (
+            torch.randint(0, i + 1, size=(1,), generator=generator).item()
+            if i > 0
+            else 0
+        )
 
         result[i] = result[j]
         result[j] = tensor[start + i * step].item()
@@ -169,8 +175,8 @@ class ShardedInfiniteSampler(Sampler):
         sample_count: int,
         shuffle: bool = False,
         seed: int = 0,
-        start: Optional[int] = None,
-        step: Optional[int] = None,
+        start: int | None = None,
+        step: int | None = None,
         advance: int = 0,
         use_new_shuffle_tensor_slice: bool = False,
     ):
@@ -182,7 +188,9 @@ class ShardedInfiniteSampler(Sampler):
         self._advance = advance
         self._iter_count = 0
         self._shuffle_tensor_slice_fn = (
-            _new_shuffle_tensor_slice if use_new_shuffle_tensor_slice else _shuffle_tensor_slice
+            _new_shuffle_tensor_slice
+            if use_new_shuffle_tensor_slice
+            else _shuffle_tensor_slice
         )
 
     def __iter__(self):

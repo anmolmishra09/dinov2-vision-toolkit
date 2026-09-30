@@ -7,7 +7,6 @@ import argparse
 import logging
 import os
 from pathlib import Path
-from typing import List, Optional
 
 import submitit
 
@@ -17,13 +16,12 @@ from dinov2.utils.cluster import (
     get_user_checkpoint_path,
 )
 
-
 logger = logging.getLogger("dinov2")
 
 
 def get_args_parser(
-    description: Optional[str] = None,
-    parents: Optional[List[argparse.ArgumentParser]] = None,
+    description: str | None = None,
+    parents: list[argparse.ArgumentParser] | None = None,
     add_help: bool = True,
 ) -> argparse.ArgumentParser:
     parents = parents or []

@@ -1,12 +1,16 @@
+from collections.abc import Callable
 from functools import partial
-from typing import Callable, Tuple
 
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from dinov2.layers import (
     LayerScale,
+)
+from dinov2.layers import (
     NestedTensorBlock as AttentionBlock,
+)
+from dinov2.layers import (
     SwiGLUFFNAligned as SwiGLUFFN,
 )
 
@@ -25,7 +29,9 @@ def init_weights_vit_timm(module: nn.Module, name: str = ""):
         module.reset_parameters()
 
 
-def named_apply(fn: Callable, module: nn.Module, name="", depth_first=True, include_root=False) -> nn.Module:
+def named_apply(
+    fn: Callable, module: nn.Module, name="", depth_first=True, include_root=False
+) -> nn.Module:
     if not depth_first and include_root:
         fn(module=module, name=name)
     for child_name, child_module in module.named_children():
@@ -74,8 +80,12 @@ class VisionHead(nn.Module):
         multiplier = 2 if use_class_token and use_patch_tokens else 1
         self.linear_projection = nn.Identity()
         if multiplier * input_dim != embed_dim or use_linear_projection:
-            assert embed_dim % multiplier == 0, f"Expects {embed_dim} to be divisible by {multiplier}"
-            self.linear_projection = nn.Linear(input_dim, embed_dim // multiplier, bias=False)
+            assert embed_dim % multiplier == 0, (
+                f"Expects {embed_dim} to be divisible by {multiplier}"
+            )
+            self.linear_projection = nn.Linear(
+                input_dim, embed_dim // multiplier, bias=False
+            )
 
     def init_weights(self):
         if self.num_blocks > 0:
@@ -84,7 +94,10 @@ class VisionHead(nn.Module):
                 named_apply(init_weights_vit_timm, block)
             self.ln_final.reset_parameters()
         if isinstance(self.linear_projection, nn.Linear):
-            nn.init.normal_(self.linear_projection.weight, std=self.linear_projection.in_features**-0.5)
+            nn.init.normal_(
+                self.linear_projection.weight,
+                std=self.linear_projection.in_features**-0.5,
+            )
 
     def forward(self, image_tokens: Tensor) -> Tensor:
         for block in self.block_list:
@@ -136,7 +149,7 @@ class VisionTower(nn.Module):
             self.backbone.init_weights()
         self.head.init_weights()
 
-    def get_backbone_features(self, images: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def get_backbone_features(self, images: Tensor) -> tuple[Tensor, Tensor, Tensor]:
         tokens = self.backbone.get_intermediate_layers(
             images,
             n=self.patch_token_layer,
@@ -148,10 +161,15 @@ class VisionTower(nn.Module):
         register_tokens = tokens[0][2]
         return class_token, patch_tokens, register_tokens
 
-    def get_class_and_patch_tokens(self, images: Tensor) -> Tuple[Tensor, Tensor]:
+    def get_class_and_patch_tokens(self, images: Tensor) -> tuple[Tensor, Tensor]:
         class_token, patch_tokens, register_tokens = self.get_backbone_features(images)
-        image_tokens = self.head(torch.cat([class_token.unsqueeze(1), register_tokens, patch_tokens], dim=1))
-        class_token, patch_tokens = image_tokens[:, 0], image_tokens[:, self.num_register_tokens + 1 :]
+        image_tokens = self.head(
+            torch.cat([class_token.unsqueeze(1), register_tokens, patch_tokens], dim=1)
+        )
+        class_token, patch_tokens = (
+            image_tokens[:, 0],
+            image_tokens[:, self.num_register_tokens + 1 :],
+        )
         return class_token, patch_tokens
 
     def forward(self, images: Tensor) -> Tensor:
@@ -170,5 +188,7 @@ class VisionTower(nn.Module):
                 patch_tokens_power = patch_tokens.clamp(min=eps).pow(power)
                 features.append(torch.mean(patch_tokens_power, dim=1).pow(1 / power))
             else:
-                raise ValueError(f"Unknown patch tokens pooler type: {self.patch_tokens_pooler_type}")
+                raise ValueError(
+                    f"Unknown patch tokens pooler type: {self.patch_tokens_pooler_type}"
+                )
         return torch.cat(features, dim=-1)

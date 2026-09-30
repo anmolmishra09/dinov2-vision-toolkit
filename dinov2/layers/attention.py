@@ -12,8 +12,7 @@ import os
 import warnings
 
 import torch
-from torch import nn, Tensor
-
+from torch import Tensor, nn
 
 logger = logging.getLogger("dinov2")
 
@@ -55,7 +54,10 @@ class Attention(nn.Module):
         self.proj_drop = nn.Dropout(proj_drop)
 
     def init_weights(
-        self, init_attn_std: float | None = None, init_proj_std: float | None = None, factor: float = 1.0
+        self,
+        init_attn_std: float | None = None,
+        init_proj_std: float | None = None,
+        factor: float = 1.0,
     ) -> None:
         init_attn_std = init_attn_std or (self.dim**-0.5)
         init_proj_std = init_proj_std or init_attn_std * factor
@@ -72,7 +74,12 @@ class Attention(nn.Module):
         q, k, v = torch.unbind(qkv, 2)
         q, k, v = [t.transpose(1, 2) for t in [q, k, v]]
         x = nn.functional.scaled_dot_product_attention(
-            q, k, v, attn_mask=None, dropout_p=self.attn_drop if self.training else 0, is_causal=is_causal
+            q,
+            k,
+            v,
+            attn_mask=None,
+            dropout_p=self.attn_drop if self.training else 0,
+            is_causal=is_causal,
         )
         x = x.transpose(1, 2).contiguous().view(B, N, C)
         x = self.proj_drop(self.proj(x))

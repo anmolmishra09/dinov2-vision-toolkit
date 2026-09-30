@@ -1,4 +1,4 @@
-from typing import Sequence
+from collections.abc import Sequence
 
 import torch
 
@@ -39,12 +39,16 @@ class DINOv2Wrapper(torch.nn.Module):
         if norm:
             outputs = [self.model.norm(out) for out in outputs]
         class_tokens = [out[:, 0] for out in outputs]
-        register_tokens = [out[:, 1 : 1 + self.model.num_register_tokens] for out in outputs]
+        register_tokens = [
+            out[:, 1 : 1 + self.model.num_register_tokens] for out in outputs
+        ]
         outputs = [out[:, 1 + self.model.num_register_tokens :] for out in outputs]
         if reshape:
             B, _, h, w = x.shape
             outputs = [
-                out.reshape(B, h // self.model.patch_size, w // self.model.patch_size, -1)
+                out.reshape(
+                    B, h // self.model.patch_size, w // self.model.patch_size, -1
+                )
                 .permute(0, 3, 1, 2)
                 .contiguous()
                 for out in outputs

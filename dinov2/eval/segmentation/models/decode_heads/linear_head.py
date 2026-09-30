@@ -4,11 +4,10 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import torch
-import torch.nn as nn
-
 from mmseg.models.builder import HEADS
 from mmseg.models.decode_heads.decode_head import BaseDecodeHead
 from mmseg.ops import resize
+from torch import nn
 
 
 @HEADS.register_module()
@@ -65,14 +64,24 @@ class BNHead(BaseDecodeHead):
             # Resizing shenanigans
             # print("before", *(x.shape for x in inputs))
             if self.resize_factors is not None:
-                assert len(self.resize_factors) == len(inputs), (len(self.resize_factors), len(inputs))
+                assert len(self.resize_factors) == len(inputs), (
+                    len(self.resize_factors),
+                    len(inputs),
+                )
                 inputs = [
-                    resize(input=x, scale_factor=f, mode="bilinear" if f >= 1 else "area")
+                    resize(
+                        input=x, scale_factor=f, mode="bilinear" if f >= 1 else "area"
+                    )
                     for x, f in zip(inputs, self.resize_factors)
                 ]
                 # print("after", *(x.shape for x in inputs))
             upsampled_inputs = [
-                resize(input=x, size=inputs[0].shape[2:], mode="bilinear", align_corners=self.align_corners)
+                resize(
+                    input=x,
+                    size=inputs[0].shape[2:],
+                    mode="bilinear",
+                    align_corners=self.align_corners,
+                )
                 for x in inputs
             ]
             inputs = torch.cat(upsampled_inputs, dim=1)

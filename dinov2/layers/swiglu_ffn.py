@@ -4,19 +4,19 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import os
-from typing import Callable, Optional
 import warnings
+from collections.abc import Callable
 
-from torch import Tensor, nn
 import torch.nn.functional as F
+from torch import Tensor, nn
 
 
 class SwiGLUFFN(nn.Module):
     def __init__(
         self,
         in_features: int,
-        hidden_features: Optional[int] = None,
-        out_features: Optional[int] = None,
+        hidden_features: int | None = None,
+        out_features: int | None = None,
         act_layer: Callable[..., nn.Module] = None,
         drop: float = 0.0,
         bias: bool = True,
@@ -55,8 +55,8 @@ class SwiGLUFFNFused(SwiGLU):
     def __init__(
         self,
         in_features: int,
-        hidden_features: Optional[int] = None,
-        out_features: Optional[int] = None,
+        hidden_features: int | None = None,
+        out_features: int | None = None,
         act_layer: Callable[..., nn.Module] = None,
         drop: float = 0.0,
         bias: bool = True,
@@ -76,8 +76,8 @@ class SwiGLUFFNAligned(nn.Module):
     def __init__(
         self,
         in_features: int,
-        hidden_features: Optional[int] = None,
-        out_features: Optional[int] = None,
+        hidden_features: int | None = None,
+        out_features: int | None = None,
         act_layer: Callable[..., nn.Module] = nn.GELU,
         drop: float = 0.0,
         bias: bool = True,
@@ -89,9 +89,15 @@ class SwiGLUFFNAligned(nn.Module):
         hidden_features = hidden_features or in_features
         d = int(hidden_features * 2 / 3)
         swiglu_hidden_features = d + (-d % align_to)
-        self.w1 = nn.Linear(in_features, swiglu_hidden_features, bias=bias, device=device)
-        self.w2 = nn.Linear(in_features, swiglu_hidden_features, bias=bias, device=device)
-        self.w3 = nn.Linear(swiglu_hidden_features, out_features, bias=bias, device=device)
+        self.w1 = nn.Linear(
+            in_features, swiglu_hidden_features, bias=bias, device=device
+        )
+        self.w2 = nn.Linear(
+            in_features, swiglu_hidden_features, bias=bias, device=device
+        )
+        self.w3 = nn.Linear(
+            swiglu_hidden_features, out_features, bias=bias, device=device
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         x1 = self.w1(x)

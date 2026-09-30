@@ -15,7 +15,7 @@ class BaseDepther(BaseModule, metaclass=ABCMeta):
     """Base class for depther."""
 
     def __init__(self, init_cfg=None):
-        super(BaseDepther, self).__init__(init_cfg)
+        super().__init__(init_cfg)
         self.fp16_enabled = False
 
     @property
@@ -36,28 +36,23 @@ class BaseDepther(BaseModule, metaclass=ABCMeta):
     @abstractmethod
     def extract_feat(self, imgs):
         """Placeholder for extract features from images."""
-        pass
 
     @abstractmethod
     def encode_decode(self, img, img_metas):
         """Placeholder for encode images with backbone and decode into a
         semantic depth map of the same size as input."""
-        pass
 
     @abstractmethod
     def forward_train(self, imgs, img_metas, **kwargs):
         """Placeholder for Forward function for training."""
-        pass
 
     @abstractmethod
     def simple_test(self, img, img_meta, **kwargs):
         """Placeholder for single image test."""
-        pass
 
     @abstractmethod
     def aug_test(self, imgs, img_metas, **kwargs):
         """Placeholder for augmentation test."""
-        pass
 
     def forward_test(self, imgs, img_metas, **kwargs):
         """
@@ -71,10 +66,13 @@ class BaseDepther(BaseModule, metaclass=ABCMeta):
         """
         for var, name in [(imgs, "imgs"), (img_metas, "img_metas")]:
             if not isinstance(var, list):
-                raise TypeError(f"{name} must be a list, but got " f"{type(var)}")
+                raise TypeError(f"{name} must be a list, but got {type(var)}")
         num_augs = len(imgs)
         if num_augs != len(img_metas):
-            raise ValueError(f"num of augmentations ({len(imgs)}) != " f"num of image meta ({len(img_metas)})")
+            raise ValueError(
+                f"num of augmentations ({len(imgs)}) != "
+                f"num of image meta ({len(img_metas)})"
+            )
         # all images in the same aug batch all of the same ori_shape and pad
         # shape
         for img_meta in img_metas:
@@ -145,7 +143,12 @@ class BaseDepther(BaseModule, metaclass=ABCMeta):
 
         loss, log_vars = self._parse_losses(real_losses)
 
-        outputs = dict(loss=loss, log_vars=log_vars, num_samples=len(data_batch["img_metas"]), log_imgs=log_imgs)
+        outputs = dict(
+            loss=loss,
+            log_vars=log_vars,
+            num_samples=len(data_batch["img_metas"]),
+            log_imgs=log_imgs,
+        )
 
         return outputs
 

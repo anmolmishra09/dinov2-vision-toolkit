@@ -1,6 +1,4 @@
 import torch
-from typing import List, Union
-
 
 from dinov2.thirdparty.CLIP.clip.simple_tokenizer import SimpleTokenizer
 
@@ -9,7 +7,9 @@ class Tokenizer(SimpleTokenizer):
     def __init__(self, vocab_path: str):
         SimpleTokenizer.__init__(self, bpe_path=vocab_path)
 
-    def tokenize(self, texts: Union[str, List[str]], context_length: int = 77) -> torch.LongTensor:
+    def tokenize(
+        self, texts: str | list[str], context_length: int = 77
+    ) -> torch.LongTensor:
         """
         Returns the tokenized representation of given input string(s)
 

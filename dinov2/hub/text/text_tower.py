@@ -1,5 +1,5 @@
 import torch
-from torch import nn, Tensor
+from torch import Tensor, nn
 
 from dinov2.layers import (
     CausalAttentionBlock,
@@ -43,7 +43,10 @@ class TextHead(nn.Module):
                 self.block_list[i].init_weights()
             self.ln_final.reset_parameters()
         if isinstance(self.linear_projection, nn.Linear):
-            nn.init.normal_(self.linear_projection.weight, std=self.linear_projection.in_features**-0.5)
+            nn.init.normal_(
+                self.linear_projection.weight,
+                std=self.linear_projection.in_features**-0.5,
+            )
 
     def forward(self, text_tokens: Tensor) -> Tensor:
         for block in self.block_list:
@@ -93,7 +96,9 @@ class TextTower(nn.Module):
             features = text_tokens[:, -1]
         elif self.tokens_pooler_type == "argmax":
             assert token_indices is not None
-            features = text_tokens[torch.arange(text_tokens.shape[0]), token_indices.argmax(dim=-1)]
+            features = text_tokens[
+                torch.arange(text_tokens.shape[0]), token_indices.argmax(dim=-1)
+            ]
         else:
             raise ValueError(f"Unknown text tokens pooler type: {self.pooler_type}")
         return features

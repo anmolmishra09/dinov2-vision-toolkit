@@ -4,19 +4,18 @@
 # found in the LICENSE file in the root directory of this source tree.
 
 import os
+from functools import partial
 from typing import Any
 
 import torch
-import dinov2.distributed as distributed
-from functools import partial
 from fvcore.common.checkpoint import Checkpointer
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
-from torch.distributed.fsdp import ShardingStrategy
-from torch.distributed.fsdp import MixedPrecision
-from torch.distributed.fsdp import StateDictType
+from torch.distributed.fsdp import MixedPrecision, ShardingStrategy, StateDictType
+from torch.distributed.fsdp._runtime_utils import _reshard
 from torch.distributed.fsdp.sharded_grad_scaler import ShardedGradScaler
 from torch.distributed.fsdp.wrap import ModuleWrapPolicy
-from torch.distributed.fsdp._runtime_utils import _reshard
+
+from dinov2 import distributed
 
 
 def get_fsdp_wrapper(model_cfg, modules_to_wrap=set()):
@@ -106,7 +105,7 @@ class FSDPCheckpointer(Checkpointer):
         basename = f"{name}.{rankstr()}.pth"
         save_file = os.path.join(self.save_dir, basename)
         assert os.path.basename(save_file) == basename, basename
-        self.logger.info("Saving checkpoint to {}".format(save_file))
+        self.logger.info(f"Saving checkpoint to {save_file}")
         with self.path_manager.open(save_file, "wb") as f:
             torch.save(data, f)
         self.tag_last_checkpoint(basename)
@@ -132,7 +131,7 @@ class FSDPCheckpointer(Checkpointer):
         try:
             with self.path_manager.open(save_file, "r") as f:
                 last_saved = f.read().strip()
-        except IOError:
+        except OSError:
             # if file doesn't exist, maybe because it has just been
             # deleted by a separate process
             return ""

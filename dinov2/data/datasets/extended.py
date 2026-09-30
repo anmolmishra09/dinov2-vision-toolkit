@@ -3,11 +3,11 @@
 # This source code is licensed under the Apache License, Version 2.0
 # found in the LICENSE file in the root directory of this source tree.
 
-from typing import Any, Tuple
+from typing import Any
 
 from torchvision.datasets import VisionDataset
 
-from .decoders import TargetDecoder, ImageDataDecoder
+from .decoders import ImageDataDecoder, TargetDecoder
 
 
 class ExtendedVisionDataset(VisionDataset):
@@ -20,7 +20,7 @@ class ExtendedVisionDataset(VisionDataset):
     def get_target(self, index: int) -> Any:
         raise NotImplementedError
 
-    def __getitem__(self, index: int) -> Tuple[Any, Any]:
+    def __getitem__(self, index: int) -> tuple[Any, Any]:
         try:
             image_data = self.get_image_data(index)
             image = ImageDataDecoder(image_data).decode()
